@@ -1,8 +1,10 @@
 from durable.lang import *
 
-with ruleset('testRS'):
+with ruleset('test'):
+    # antecedent
     @when_all(m.subject == 'World')
     def say_hello(c):
+        # consequent
         print('Hello {0}'.format(c.m.subject))
 
-post('testRS', {'subject': 'World'})
+post('test', {'subject': 'World'})
