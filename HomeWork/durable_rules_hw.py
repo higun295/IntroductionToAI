@@ -4,7 +4,7 @@ with ruleset('install_ssm_application'):
     # 사원은 스마트폰에 SSM 어플리케이션을 설치 해야 한다.
     @when_all(m.role == 'employee')
     def enforce_ssm_installation(c):
-        print(f"사원 '{c.m.name}'은 스마트폰에 SSM 어플리케이션을 설치 해야 한다.")
+        print(f"사원 '{c.m.name}'은 스마트폰에 SSM 어플리케이션을 설치 해야 합니다.")
         assert_fact('install_ssm_application', {'name': c.m.name, 'action': 'collect_info'})
 
     # SSM 어플리케이션을 설치하면 하드웨어 정보와 전화번호를 수집한다.
