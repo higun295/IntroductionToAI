@@ -39,15 +39,3 @@ SSM 출입정책 상태 : 정책적용중, 출입정책해제
     - 보안 요원은 사원의 스마트폰을 불시에 점검할 수 있는 권한이 있다.
     - 보안 요원이 사원의 스마트폰에서 촬영 기록 및 삭제 내역을 발견하면 보안 위규 처리된다.
 """
-
-from durable.lang import *
-
-with ruleset('test'):
-    # antecedent
-    @when_all(m.subject == 'World')
-    def say_hello(c):
-        # consequent
-        print('Hello {0}'.format(c.m.subject))
-
-result = post('test', {'subject': 'World'})
-print(result)
