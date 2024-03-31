@@ -46,7 +46,7 @@ with ruleset('ssm_application_rules'):
     @when_all(m.role == 'employee')
     def enforce_ssm_installation(c):
         print(f"사원 '{c.m.name}'은 스마트폰에 SSM 어플리케이션을 설치 해야 합니다.")
-        assert_fact('ssm_application_rules', {'name': c.m.name, 'action': 'collect_info'})
+        post('ssm_application_rules', {'name': c.m.name, 'action': 'collect_info'})
 
     @when_all(m.action == 'collect_info')
     def collect_device_info(c):
@@ -63,23 +63,28 @@ with ruleset('campus_security_rules'):
     @when_all(m.role == 'employee')
     def track_employee_location(c):
         if c.m.taggingLocation == 'main_gate_outside':
-            post('campus_security_rules', {'name': c.m.name, 'current_location': 'inside_campus'})
             print(f"사원 '{c.m.name}'이 캠퍼스에 들어왔습니다.")
         elif c.m.taggingLocation == 'main_gate_inside':
             print(f"사원 '{c.m.name}'이 캠퍼스에서 나갔습니다.")
         elif c.m.taggingLocation == 'security_gate_outside':
             print(f"사원 '{c.m.name}'이 보안구역에 들어왔습니다.")
-            print(f"{c.m.name} SSM 출입정책의 상태가 변경됩니다. 현재상태 : '정책적용중'")
-            assert_fact('campus_security_rules',
-                        {'name': c.m.name, 'current_location': 'inside_security_zone', 'ssm_policy_status': 'not_applied',
-                         'duration': 181})
+            # print(f"{c.m.name} SSM 출입정책의 상태가 변경됩니다. 현재상태 : '정책적용중'")
+            post('campus_security_rules',
+                        {'name': c.m.name, 'current_location': 'inside_security_zone', 'ssm_policy_status': 'not_applied', 'duration': 181})
         elif c.m.taggingLocation == 'security_gate_inside':
             print(f"사원 '{c.m.name}'이 보안구역에서 나갔습니다.")
-            assert_fact('campus_security_rules', {'name': c.m.name, 'ssm_policy_status': 'applied'})
+            post('campus_security_rules', {'name': c.m.name, 'ssm_policy_status': 'abnormal_pattern'})
 
     @when_all((m.current_location == 'inside_security_zone') & (m.ssm_policy_status == 'applied'))
     def blocking_smartphone_camera(c):
         print("SSM 출입정책이 적용되었습니다. 모든 카메라 기능을 차단합니다.")
+
+    @when_all(m.deactivate_button_pressed == 'true')
+    def check_deactivate_possible(c):
+        if c.m.current_location == 'inside_security_zone':
+            print("보안 구역에서는 SSM 출입정책을 해제할 수 없습니다.")
+        elif c.m.current_location == 'outside_security_zone' or c.m.current_location == 'inside_campus':
+            print("SSM 출입정책을 해제할 수 있습니다.")
 
     @when_all((m.current_location == 'inside_security_zone') & (m.ssm_policy_status == 'not_applied'))
     def send_push_notification(c):
@@ -93,17 +98,16 @@ with ruleset('campus_security_rules'):
     @when_all(m.ssm_policy_status == 'abnormal_pattern')
     def inspect_smartphone(c):
         print("SSM 이상상태 확인. 보안요원의 점검이 필요합니다.")
-        assert_fact('photo_security_rules',
+        post('photo_security_rules',
                     {'name': c.m.name, 'role': 'security_guard', 'action': 'inspect_smartphone', 'photo_saved': 'true'})
 
 
 with ruleset('photo_security_rules'):
-    @when_all(c.photo << (m.action == 'take_photo') & (
-            (m.current_location == 'inside_campus') or (m.current_location == 'inside_security_zone')))
+    @when_all((m.action == 'take_photo') & ((m.current_location == 'inside_campus') | (m.current_location == 'inside_security_zone')))
     def photo_violation(c):
-        print(f"사원 '{c.photo.name}'이 캠퍼스 내에서 촬영을 시도했습니다.")
-        assert_fact('photo_security_rules',
-                    {'name': c.photo.name, 'role': 'security_guard', 'action': 'inspect_smartphone', 'photo_saved': c.photo.photo_saved})
+        print(f"사원 '{c.m.name}'이 캠퍼스 내에서 촬영을 시도했습니다.")
+        post('photo_security_rules',
+                    {'name': c.m.name, 'role': 'security_guard', 'action': 'inspect_smartphone', 'photo_saved': c.m.photo_saved})
 
     @when_all((m.role == 'security_guard') & (m.action == 'inspect_smartphone'))
     def inspect_smartphone(c):
@@ -115,8 +119,11 @@ with ruleset('photo_security_rules'):
 
 
 print('========SSM 어플리케이션 보안 규정========')
-assert_fact('ssm_application_rules', {'role': 'employee', 'name': '신희권', 'isCommunicationPossible': 'true'})
+post('ssm_application_rules', {'role': 'employee', 'name': '신희권', 'isCommunicationPossible': 'false'})
 print('========캠퍼스 내 보안 규정========')
-assert_fact('campus_security_rules', {'role': 'employee', 'name': '신희권', 'taggingLocation': 'security_gate_inside'})
+post('campus_security_rules', {'role': 'employee', 'name': '신희권', 'taggingLocation': 'main_gate_outside'})
+post('campus_security_rules', {'role': 'employee', 'name': '신희권', 'taggingLocation': 'security_gate_outside'})
+post('campus_security_rules', {'deactivate_button_pressed': 'true', 'current_location': 'inside_security_zone'})
+post('campus_security_rules', {'role': 'employee', 'name': '신희권', 'taggingLocation': 'security_gate_inside'})
 print('========캠퍼스 내 사진 촬영 관련 규정========')
-assert_fact('photo_security_rules', {'name': '신희권', 'action': 'take_photo', 'current_location': 'inside_campus', 'photo_saved': 'true'})
+post('photo_security_rules', {'name': '신희권', 'action': 'take_photo', 'current_location': 'inside_campus', 'photo_saved': 'true'})
