@@ -14,5 +14,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
+pd.set_option('display.max_colwidth', 200)
+plt.show()
 
-
+candidate_sentences = pd.read_csv("./data/wiki_sentences_v2.csv")
+candidate_sentences.shape
