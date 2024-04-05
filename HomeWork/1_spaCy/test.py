@@ -73,16 +73,48 @@ def get_relation(sent):
     k = len(matches) - 1
 
     span = doc[matches[k][1]:matches[k][2]]
-    print('matches : ', span.text)
+    # print('matches : ', span.text)
 
     return span.text
 
 
 get_relation("John completed the task")
+relations = [get_relation(i) for i in tqdm(candidate_sentences['sentence'])]
 
-# entity_pairs = []
-#
-# for i in tqdm(candidate_sentences["sentence"]):
-#     entity_pairs.append(get_entities(i))
-#
+entity_pairs = []
+
+for i in tqdm(candidate_sentences["sentence"]):
+    entity_pairs.append(get_entities(i))
+
 # print(entity_pairs[10:20])
+
+
+# 주어(subject) 추출
+source = [i[0] for i in entity_pairs]
+
+# 목적어(object) 추출
+target = [i[1] for i in entity_pairs]
+
+kg_df = pd.DataFrame({'source': source, 'target': target, 'edge': relations})
+
+# 방향 그래프 생성
+G = nx.from_pandas_edgelist(kg_df[kg_df['edge'] == "written by"], "source", "target", edge_attr=True, create_using=nx.MultiDiGraph())
+
+plt.figure(figsize=(12, 12))
+pos = nx.spring_layout(G, k=0.5)
+nx.draw(G, with_labels=True, node_color='skyblue', node_size=1500, edge_cmap=plt.cm.Blues, pos=pos)
+
+edge_labels = {(row['source'], row['target']): row['edge'] for index, row in kg_df[kg_df['edge'] == "written by"].iterrows()}
+nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+
+plt.show()
+
+
+
+# 방향 그래프 생성(전체 데이터 대상)
+# G = nx.from_pandas_edgelist(kg_df, "source", "target", edge_attr=True, create_using=nx.MultiDiGraph())
+#
+# plt.figure(figsize=(12, 12))
+# pos = nx.spring_layout(G)
+# nx.draw(G, with_labels=True, node_color='skyblue', edge_cmap=plt.cm.Blues, pos=pos)
+# plt.show()
