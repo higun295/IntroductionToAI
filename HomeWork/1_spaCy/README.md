@@ -4,4 +4,8 @@
 - Spacy의 언어 모델은 텍스트 처리 기능을 제공하기 위해 미리 훈련된 머신러닝 모델이다.
 - "en_core_web_sm"은 영어를 처리하기 위한 작은 크기의 모델이다.
 
-- 교재에는 %matplotlib inline 이런 코드가 있는데 
+- 교재에는 `%matplotlib inline` 이런 코드가 있는데 확인해보니 이것은 jupyterNotebook 용 명령어이다.
+- PyCharm에서 수행하면 당연히 오류가 발생할 수밖에 없음.
+- 교재에 있는 것과 또 다른 부분은 `matcher.add()`의 사용 방법이다.
+- spaCy의 버전이 업데이트 되면서 해당 부분은 Parameter의 갯수를 2개만 넣으면 된다. 이름과 패턴
+- 
