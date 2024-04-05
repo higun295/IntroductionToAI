@@ -98,17 +98,20 @@ target = [i[1] for i in entity_pairs]
 kg_df = pd.DataFrame({'source': source, 'target': target, 'edge': relations})
 
 # 방향 그래프 생성
-G = nx.from_pandas_edgelist(kg_df[kg_df['edge'] == "written by"], "source", "target", edge_attr=True, create_using=nx.MultiDiGraph())
+G = nx.from_pandas_edgelist(kg_df[kg_df['edge'] == "consists of"], "source", "target",
+                            edge_attr=True, create_using=nx.MultiDiGraph())
 
 plt.figure(figsize=(12, 12))
 pos = nx.spring_layout(G, k=0.5)
 nx.draw(G, with_labels=True, node_color='skyblue', node_size=1500, edge_cmap=plt.cm.Blues, pos=pos)
 
-edge_labels = {(row['source'], row['target']): row['edge'] for index, row in kg_df[kg_df['edge'] == "written by"].iterrows()}
+edge_labels = {(row['source'], row['target']): row['edge'] for index, row in kg_df[kg_df['edge'] == "consists of"].iterrows()}
 nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
 
 plt.show()
 
+# 'released on'
+# 'introduced in'
 
 
 # 방향 그래프 생성(전체 데이터 대상)
