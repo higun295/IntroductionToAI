@@ -1,3 +1,13 @@
+# 실제 데이터를 기반으로 머신러닝 알고리즘 적용
+# 데이터는 많으면 많을수록 좋음 (100개 이상)
+
+# [miniproject 보고서 포함 내용]
+# - 데이터 설명
+# - 사용한 모델
+# - 학습 과정
+# - 성능
+# - 프로젝트 수행을 통해서 얻은 경험
+
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
