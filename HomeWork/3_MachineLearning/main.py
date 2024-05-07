@@ -3,7 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # 파일 경로
-file_path = '/content/drive/My Drive/Colab Notebooks/Test.csv'
+file_path = './data/Train2.csv'
 
 # pandas를 사용하여 CSV 파일 읽기
 data = pd.read_csv(file_path)
