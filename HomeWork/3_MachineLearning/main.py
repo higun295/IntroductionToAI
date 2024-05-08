@@ -74,10 +74,10 @@ data_filled_zero = data.fillna(0)
 # plt.xticks(rotation=90)  # x축 레이블 회전
 # plt.show()
 
-# 히스토그램으로 각 센서의 데이터 분포 확인
-plt.figure(figsize=(20, 15))  # 차트 크기 조정
-data_filled_zero.hist(bins=50)
-plt.show()
+# # 히스토그램으로 각 센서의 데이터 분포 확인
+# plt.figure(figsize=(20, 15))  # 차트 크기 조정
+# data_filled_zero.hist(bins=50)
+# plt.show()
 
 # 상관관계 히트맵 생성
 plt.figure(figsize=(20, 15))  # 차트 크기 조정
