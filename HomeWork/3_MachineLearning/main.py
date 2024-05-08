@@ -35,6 +35,16 @@
 # 2. 알고리즘 선택
 # 모델 유형: 문제의 성격에 맞는 알고리즘을 선택합니다. 예를 들어, 분류 문제에는 랜덤 포레스트, 로지스틱 회귀, XGBoost 등을 고려할 수 있고, 회귀 문제에는 선형 회귀, 의사결정나무 등을 사용할 수 있습니다.
 # 모델 튜닝: 최적의 하이퍼파라미터를 찾기 위해 GridSearchCV, RandomizedSearchCV 등의 방법을 활용해 튜닝합니다.
+    # 1. 선형 회귀 (Linear Regression)
+        # 센서 간의 선형적 관계를 모델링하려면 선형 회귀가 가장 기본적이고 간단한 방법입니다. 이는 독립 변수(한 센서의 데이터)와 종속 변수(다른 센서의 데이터) 간의 선형 관계를 찾아내는 데 사용됩니다.
+    # 2. 다중 선형 회귀 (Multiple Linear Regression)
+        # 여러 센서 데이터를 동시에 고려하여 한 센서의 값을 예측하고자 할 때 사용합니다. 이는 여러 독립 변수를 사용하여 하나의 종속 변수와의 관계를 모델링합니다.
+    # 3. 결정 트리 (Decision Trees)
+        # 비선형적 관계와 복잡한 패턴을 모델링할 수 있습니다. 센서 데이터의 다양한 조건과 특성에 따라 출력을 예측하는데 유용합니다.
+    # 4. 랜덤 포레스트 (Random Forest)
+        # 결정 트리의 오버피팅 문제를 완화하며, 여러 개의 결정 트리를 결합해 보다 정확한 예측을 가능하게 합니다. 특히 센서 데이터가 많고 복잡할 때 효과적입니다.
+    # 5. 인공 신경망 (Artificial Neural Networks)
+        # 매우 복잡한 데이터 구조와 패턴을 학습할 수 있는 모델로, 센서 데이터 간의 복잡한 관계와 상호작용을 효과적으로 모델링할 수 있습니다. 데이터가 충분히 많고, 높은 수준의 비선형 관계를 포착해야 할 경우에 적합합니다.
 # 3. 학습 과정
 # 데이터 분할: 학습, 검증, 테스트 데이터로 분할합니다. 일반적으로 전체 데이터의 70-80%를 학습 데이터로, 나머지를 검증과 테스트 데이터로 나눕니다.
 # 모델 훈련: 학습 데이터로 모델을 훈련시키고, 검증 데이터로 초기에 모델의 성능을 확인합니다.
@@ -49,24 +59,21 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import learning_curve
 
 # 파일 경로
-file_path = './data/Wafer-Dataset/Prediction_Batch_files/Wafer_Test2.csv'
+file_path = './data/Wafer-Dataset/Prediction_Batch_files/Test1.csv'
 
 # # pandas를 사용하여 CSV 파일 읽기
 data = pd.read_csv(file_path)
 
-# # 각 컬럼별 결측값의 수 확인
-# print(data.isnull().sum())
-
-# 결측값을 0으로 대체하기
-data_filled_zero = data.fillna(0)
-# # 결측값을 평균으로 대체하기
-# data_filled_zero = data.fillna(data.mean(), inplace=True)
-
-
-# # 결측값 처리 후 다시 확인
-# print(data_filled.isnull().sum())
+# # 결측값을 0으로 대체하기
+# data_filled_zero = data.fillna(0)
+# 결측값을 평균으로 대체하기
+data_filled_zero = data.fillna(data.mean(), inplace=True)
 
 # # 박스플롯을 사용하여 이상값 확인
 # plt.figure(figsize=(80, 20))
@@ -74,16 +81,34 @@ data_filled_zero = data.fillna(0)
 # plt.xticks(rotation=90)  # x축 레이블 회전
 # plt.show()
 
+# 특성과 타깃 분리
+X = data_filled_zero.drop('Sensor-1', axis=1)  # 타깃 센서를 제외한 나머지 센서 데이터
+y = data_filled_zero['Sensor-1']  # 예측하고자 하는 센서 데이터
+
+# 데이터 분리
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 랜덤 포레스트 모델 생성 및 학습
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# 예측 수행
+y_pred = model.predict(X_test)
+
+# 평가
+mse = mean_squared_error(y_test, y_pred)
+print(f'Mean Squared Error: {mse}')
+
 # # 히스토그램으로 각 센서의 데이터 분포 확인
 # plt.figure(figsize=(20, 15))  # 차트 크기 조정
 # data_filled_zero.hist(bins=50)
 # plt.show()
 
-# 상관관계 히트맵 생성
-plt.figure(figsize=(20, 15))  # 차트 크기 조정
-correlation_matrix = data_filled_zero.corr()  # 상관관계 계산
-sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
-plt.show()
+# # 상관관계 히트맵 생성
+# plt.figure(figsize=(20, 15))  # 차트 크기 조정
+# correlation_matrix = data_filled_zero.corr()  # 상관관계 계산
+# sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+# plt.show()
 
 # # IQR을 계산하고 이상값 필터링
 # Q1 = data_filled_zero.quantile(0.25)
