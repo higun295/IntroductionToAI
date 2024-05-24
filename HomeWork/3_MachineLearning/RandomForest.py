@@ -1,58 +1,53 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.metrics import mean_squared_error, r2_score
 
-pd.set_option('display.max_rows', None)  # 모든 행 출력
-pd.set_option('display.max_columns', None)  # 모든 열 출력
-pd.set_option('display.width', None)  # 셸 너비에 맞춰 출력
-pd.set_option('display.max_colwidth', None)  # 열의 최대 너비 제한 없앰
-
-# 데이터 불러오기
-data = pd.read_csv('./data/Wafer-Dataset/Prediction_Batch_files/Test_Triple.csv')
-
-# 전체가 nan인 열 제거
+# 데이터 불러오기 및 전처리
+data = pd.read_csv('./data/archive/merged_data2.csv')
 data = data.dropna(axis=1, how='all')
-
-# NaN이 아닌 데이터가 있는 열만 평균을 계산
 valid_means = data.mean(skipna=True)
-
-# 결측치 대체
 data.fillna(valid_means, inplace=True)
 
-# ================================================================================
+# 이상치를 중앙값으로 대체
+for col in data.columns:
+    if np.issubdtype(data[col].dtype, np.number):
+        median = data[col].median()
+        std_dev = data[col].std()
+        outliers = (data[col] - median).abs() > 3 * std_dev
+        data.loc[outliers, col] = np.nan
+        data[col].fillna(median, inplace=True)
 
-sensor_name = 'Sensor-1'
+# 학습 및 테스트 데이터 분할
+X = data.drop('Sensor-1', axis=1)
+y = data['Sensor-1']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=15)
 
-# 독립 변수와 종속 변수 설정
-X = data.drop(sensor_name, axis=1)
-y = data[sensor_name]
+# 데이터 스케일링과 랜덤 포레스트 모델을 파이프라인으로 구성
+pipeline = make_pipeline(StandardScaler(), RandomForestRegressor(random_state=42, verbose=2))
 
-# 데이터를 학습 세트와 테스트 세트로 분할
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# 그리드서치 파라미터 설정
+param_grid = {
+    'randomforestregressor__n_estimators': [100, 200],
+    'randomforestregressor__max_depth': [10, 20, 30],
+    'randomforestregressor__min_samples_split': [2, 4],
+    'randomforestregressor__min_samples_leaf': [1, 2]
+}
 
-# 랜덤 포레스트 모델 생성 및 학습
-model = RandomForestRegressor(n_estimators=100, random_state=15)
-model.fit(X_train, y_train)
+# 그리드서치 객체 생성
+grid_search = GridSearchCV(pipeline, param_grid, cv=5, verbose=2, n_jobs=-1)
 
-# 결정계수
-relation_square = model.score(X_train, y_train)
+# 그리드서치 실행
+grid_search.fit(X_train, y_train)
 
-# 피처 중요도 추출
-importances = model.feature_importances_
+# 최적의 파라미터와 최적의 모델 성능 출력
+print("Best parameters:", grid_search.best_params_)
+print("Best cross-validation score: {:.2f}".format(grid_search.best_score_))
 
-# 중요도에 따라 피처의 인덱스를 정렬
-indices = np.argsort(importances)[::-1]
-
-# 상위 100개 피처 선택
-top_100_indices = indices[:100]
-top_100_features = X.columns[top_100_indices]
-
-plt.figure(figsize=(10, 15))
-plt.title('Top 100 Feature Importances of {}'.format(sensor_name))
-plt.barh(range(len(top_100_indices)), importances[top_100_indices], color='b', align='center')
-plt.yticks(range(len(top_100_indices)), [X.columns[i] for i in top_100_indices])
-plt.gca().invert_yaxis()  # 높은 중요도를 가진 피처가 위로 오도록 y축을 역순으로 설정
-plt.xlabel('Relative Importance')
-plt.show()
+# 테스트 데이터에 대한 성능 평가
+best_model = grid_search.best_estimator_
+test_score = best_model.score(X_test, y_test)
+print("Test Score: ", test_score)
