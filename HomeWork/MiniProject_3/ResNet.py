@@ -25,8 +25,8 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     # 데이터셋 경로 및 전처리 정의
-    train_path = 'D:/pytorch_images3/Training'
-    val_path = 'D:/pytorch_images3/Validation'
+    train_path = 'D:/images/Training'
+    val_path = 'D:/images/Validation'
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
